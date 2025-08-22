@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ForwardingConfig {
     final private Context context;
@@ -123,7 +125,7 @@ public class ForwardingConfig {
     }
 
     public static String getDefaultJsonTemplate() {
-        return "{\n  \"from\":\"%from%\",\n  \"text\":\"%text%\",\n  \"sentStamp\":%sentStamp%,\n  \"receivedStamp\":%receivedStamp%,\n  \"sim\":\"%sim%\"\n}";
+        return "{\n  \"from\":\"%from%\",\n  \"text\":\"%text%\",\n  \"customText\":\"%Regex=\\\\b\\\\d+\\\\b%\"  ,\n  \"sentStamp\":%sentStamp%,\n  \"receivedStamp\":%receivedStamp%,\n  \"sim\":\"%sim%\"\n}";
     }
 
     public static String getDefaultJsonHeaders() {
@@ -237,6 +239,7 @@ public class ForwardingConfig {
 
     public String prepareMessage(String from, String content, String sim, long timeStamp) {
         return this.getTemplate()
+                .replaceAll("%Regex=([^%]+)%", getContentByTemplateRegex(content))
                 .replaceAll("%from%", from)
                 .replaceAll("%sentStamp%", String.valueOf(timeStamp))
                 .replaceAll("%receivedStamp%", String.valueOf(System.currentTimeMillis()))
@@ -261,5 +264,26 @@ public class ForwardingConfig {
         String stamp = Long.toString(System.currentTimeMillis());
         int randomNum = new Random().nextInt((999990 - 100000) + 1) + 100000;
         return stamp + '_' + randomNum;
+    }
+
+    private String getContentByTemplateRegex(String content) {
+        if (StringUtils.isAllBlank(content)) {
+            return content;
+        }
+        Pattern pattern = Pattern.compile("%Regex=([^%]+)%");
+        Matcher matcher = pattern.matcher(this.getTemplate());
+        String regex = null;
+        if (matcher.find()) {
+            regex = matcher.group(1);
+        }
+        if (StringUtils.isAllBlank(regex)) {
+            return content;
+        }
+        Pattern pattern1 = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher1 = pattern1.matcher(content);
+        if (matcher1.find()) {
+            return matcher1.group(1);
+        }
+        return content;
     }
 }

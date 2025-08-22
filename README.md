@@ -55,7 +55,8 @@ Sample payload:
      "text": "%text%",
      "sentStamp": "%sentStamp%",
      "receivedStamp": "%receivedStamp%",
-     "sim": "%sim%"
+     "sim": "%sim%",
+     "customText": "%Regex=[1-0]%"
 }
 ```
 
@@ -65,6 +66,7 @@ Available placeholders:
 %sentStamp%
 %receivedStamp%
 %sim%
+%Regex=%
 
 ### Request example
 Use this curl sample request to prepare your backend code
